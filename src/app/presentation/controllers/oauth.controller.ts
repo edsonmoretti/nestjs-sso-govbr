@@ -29,7 +29,7 @@ export class OAuthController {
    * @param res Response.
    */
   @Get('/user')
-  async user(@Req() req: Request, @Res() res: Response) {
+  user(@Req() req: Request, @Res() res: Response) {
     const user = this.authService.getUser(req.session);
     if (!user) {
       return res.status(HttpStatus.UNAUTHORIZED).json({
