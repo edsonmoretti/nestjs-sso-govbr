@@ -1,4 +1,4 @@
-import { GovBrUser } from '../../domain/gov-br-user';
+import { GovBrUser } from '../../../domain/gov-br-user';
 
 /**
  * Interface for Gov.br authentication services.
