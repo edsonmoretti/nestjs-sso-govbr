@@ -1,42 +1,42 @@
 import { GovBrUser } from '../../../domain/gov-br-user';
 
 /**
- * Interface for Gov.br authentication services.
- * Defines the methods needed to implement different authentication strategies.
+ * Interface para serviços de autenticação Gov.br.
+ * Define os métodos necessários para implementar diferentes estratégias de autenticação.
  */
 export interface IGovBrAuthService {
   /**
-   * Generates the login URL to redirect the user to the Gov.br provider.
+   * Gera a URL de login para redirecionar o usuário para o provedor Gov.br.
    *
-   * @param session User's HTTP session to store state and nonce.
-   * @returns Complete URL for the Gov.br authorization endpoint.
-   * @throws Exception If error occurs in URL generation or PKCE.
+   * @param session Sessão HTTP do usuário para armazenar state e nonce.
+   * @returns URL completa para o endpoint de autorização do Gov.br.
+   * @throws Exceção se ocorrer erro na geração da URL ou PKCE.
    */
   getLoginUrl(session: any): Promise<string>;
 
   /**
-   * Processes the callback from the provider after authentication.
-   * Exchanges the authorization code for tokens and gets user information.
+   * Processa o callback do provedor após a autenticação.
+   * Troca o código de autorização por tokens e obtém informações do usuário.
    *
-   * @param request HTTP request containing callback parameters.
-   * @param session User's HTTP session.
-   * @returns ResponseEntity with error or string with redirect URL.
-   * @throws Exception If error occurs in processing.
+   * @param request Requisição HTTP contendo parâmetros do callback.
+   * @param session Sessão HTTP do usuário.
+   * @returns ResponseEntity com erro ou string com URL de redirecionamento.
+   * @throws Exceção se ocorrer erro no processamento.
    */
   handleCallback(request: any, session: any): Promise<any>;
 
   /**
-   * Logs out the user, invalidating the session.
+   * Faz logout do usuário, invalidando a sessão.
    *
-   * @param session User's HTTP session to be invalidated.
+   * @param session Sessão HTTP do usuário a ser invalidada.
    */
   logout(session: any): Promise<string>;
 
   /**
-   * Retrieves the logged-in user's information from the session.
+   * Recupera as informações do usuário logado da sessão.
    *
-   * @param session User's HTTP session.
-   * @returns GovBrUser with user data or null if not logged in.
+   * @param session Sessão HTTP do usuário.
+   * @returns GovBrUser com dados do usuário ou null se não estiver logado.
    */
   getUser(session: any): GovBrUser | null;
 }

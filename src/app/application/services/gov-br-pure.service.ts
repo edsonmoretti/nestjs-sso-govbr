@@ -5,8 +5,8 @@ import { GovBrUser } from '../../domain/gov-br-user';
 import { PkceUtil } from '../../infrastructure/pkce.util';
 
 /**
- * Pure implementation (without external libraries) of the Gov.br authentication service.
- * Uses OAuth 2.0 with OpenID Connect and PKCE for secure authentication.
+ * Implementação pura (sem bibliotecas externas) do serviço de autenticação Gov.br.
+ * Usa OAuth 2.0 com OpenID Connect e PKCE para autenticação segura.
  */
 @Injectable()
 export class GovBrPureService {
@@ -38,23 +38,23 @@ export class GovBrPureService {
       !this.clientSecret ||
       !this.logoutUri
     ) {
-      throw new Error('Missing environment variables');
+      throw new Error('Variáveis de ambiente ausentes');
     }
   }
 
   getLoginUrl(session: any): string {
-    // Generate security parameters: state, nonce and PKCE
+    // Gera parâmetros de segurança: state, nonce e PKCE
     const state = crypto.randomUUID();
     const nonce = crypto.randomUUID();
     const codeVerifier = PkceUtil.generateCodeVerifier();
     const codeChallenge = PkceUtil.generateCodeChallenge(codeVerifier);
 
-    // Store in session for later validation
+    // Armazena na sessão para validação posterior
     session.oauth_state = state;
     session.oauth_nonce = nonce;
     session.code_verifier = codeVerifier;
 
-    // Build the authorization URL with all necessary parameters
+    // Monta a URL de autorização com todos os parâmetros necessários
     const authorizeUrl =
       this.urlProvider +
       '/authorize?' +
@@ -79,7 +79,7 @@ export class GovBrPureService {
       '&' +
       'code_challenge_method=S256';
 
-    this.logger.log(`Redirecting to authorize: ${authorizeUrl}`);
+    this.logger.log(`Redirecionando para autorização: ${authorizeUrl}`);
     return authorizeUrl;
   }
 
@@ -89,26 +89,26 @@ export class GovBrPureService {
     const error = request.query.error;
     const errorDescription = request.query.error_description;
 
-    // Check if there was an error in the callback
+    // Verifica se houve erro no callback
     if (error) {
       const errorResponse = {
         error,
         error_description: errorDescription,
         state,
       };
-      this.logger.error(`OAuth error: ${JSON.stringify(errorResponse)}`);
+      this.logger.error(`Erro OAuth: ${JSON.stringify(errorResponse)}`);
       return { status: 400, body: errorResponse };
     }
 
-    // Validate the state to prevent CSRF attacks
+    // Valida o state para prevenir ataques CSRF
     const sessionState = session.oauth_state;
     if (state !== sessionState) {
-      throw new Error('Invalid state');
+      throw new Error('State inválido');
     }
 
     const codeVerifier = session.code_verifier;
 
-    // Exchange the authorization code for access tokens
+    // Troca o código de autorização por tokens de acesso
     const tokenUrl = this.urlProvider + '/token';
 
     const headers = {
@@ -124,17 +124,17 @@ export class GovBrPureService {
     body.append('redirect_uri', this.redirectUri);
     body.append('code_verifier', codeVerifier);
 
-    this.logger.log(`Exchanging code for token: ${body.toString()}`);
+    this.logger.log(`Trocando código por token: ${body.toString()}`);
     const tokenResponse = await firstValueFrom(
       this.httpService.post(tokenUrl, body.toString(), { headers }),
     );
-    this.logger.log(`Token response: ${JSON.stringify(tokenResponse.data)}`);
+    this.logger.log(`Resposta do token: ${JSON.stringify(tokenResponse.data)}`);
 
-    // Extract the access_token from the JSON response
+    // Extrai o access_token da resposta JSON
     const tokenJson = tokenResponse.data;
     const accessToken = tokenJson.access_token;
 
-    // Get user information using the access_token
+    // Obtém informações do usuário usando o access_token
     const userInfoUrl = this.urlProvider + '/userinfo';
     const userHeaders = {
       Authorization: `Bearer ${accessToken}`,
@@ -143,9 +143,11 @@ export class GovBrPureService {
     const userResponse = await firstValueFrom(
       this.httpService.get(userInfoUrl, { headers: userHeaders }),
     );
-    this.logger.log(`User info response: ${JSON.stringify(userResponse.data)}`);
+    this.logger.log(
+      `Resposta das informações do usuário: ${JSON.stringify(userResponse.data)}`,
+    );
 
-    // Convert the JSON response to GovBrUser and store in session
+    // Converte a resposta JSON para GovBrUser e armazena na sessão
     const userInfo = userResponse.data as GovBrUser;
     session.user = JSON.stringify(userInfo);
 
@@ -153,7 +155,7 @@ export class GovBrPureService {
   }
 
   logout(session: any): Promise<string> {
-    // Invalidate the user's session
+    // Invalida a sessão do usuário
     return new Promise((resolve) => {
       session.destroy(() => {
         resolve(
@@ -166,26 +168,26 @@ export class GovBrPureService {
   }
 
   getUser(session: any): GovBrUser | null {
-    // Retrieve the object stored in the session with the key "user"
+    // Recupera o objeto armazenado na sessão com a chave "user"
     const obj = session.user;
     if (!obj) {
-      // If no data in session, return null
+      // Se não há dados na sessão, retorna null
       return null;
     }
     try {
-      // Check if the object is a String (JSON serialized)
+      // Verifica se o objeto é uma String (JSON serializado)
       if (typeof obj === 'string') {
-        // Deserialize the JSON string to GovBrUser
+        // Desserializa a string JSON para GovBrUser
         return JSON.parse(obj) as GovBrUser;
       } else if (typeof obj === 'object') {
-        // If it's an object, return as GovBrUser
+        // Se é um objeto, retorna como GovBrUser
         return obj as GovBrUser;
       }
     } catch (e) {
-      // Log the error in case of deserialization failure
-      this.logger.error('Error deserializing user from session', e);
+      // Registra o erro em caso de falha na desserialização
+      this.logger.error('Erro ao desserializar usuário da sessão', e);
     }
-    // Return null if unable to retrieve data
+    // Retorna null se não conseguir recuperar os dados
     return null;
   }
 }

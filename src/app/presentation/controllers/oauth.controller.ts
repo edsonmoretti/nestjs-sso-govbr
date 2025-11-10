@@ -3,8 +3,8 @@ import type { Response, Request } from 'express';
 import { GovBrPureService } from '../../application/services/gov-br-pure.service';
 
 /**
- * Controller responsible for managing OAuth 2.0 authentication routes with Gov.br.
- * Uses an injected authentication service to process login, callback, logout, and user retrieval.
+ * Controller responsável por gerenciar as rotas de autenticação OAuth 2.0 com Gov.br.
+ * Usa um serviço de autenticação injetado para processar login, callback, logout e recuperação de usuário.
  */
 @Controller()
 export class OAuthController {
@@ -13,9 +13,9 @@ export class OAuthController {
   constructor(private readonly authService: GovBrPureService) {}
 
   /**
-   * Redirects to the user information page.
+   * Redireciona para a página de informações do usuário.
    *
-   * @returns Redirect to /user.
+   * @returns Redirecionamento para /user.
    */
   @Get('/')
   index(@Res() res: Response) {
@@ -23,10 +23,10 @@ export class OAuthController {
   }
 
   /**
-   * Returns the logged-in user's information or an error message if not logged in.
+   * Retorna as informações do usuário logado ou uma mensagem de erro se não estiver logado.
    *
-   * @param req Request with session.
-   * @param res Response.
+   * @param req Requisição com sessão.
+   * @param res Resposta.
    */
   @Get('/user')
   user(@Req() req: Request, @Res() res: Response) {
@@ -41,18 +41,18 @@ export class OAuthController {
   }
 
   /**
-   * Initiates the login process, redirecting to the Gov.br authorization URL.
+   * Inicia o processo de login, redirecionando para a URL de autorização do Gov.br.
    *
-   * @param req Request with session.
-   * @param res Response.
+   * @param req Requisição com sessão.
+   * @param res Resposta.
    */
   @Get('/login')
-  async login(@Req() req: Request, @Res() res: Response) {
+  login(@Req() req: Request, @Res() res: Response) {
     try {
-      const loginUrl = await this.authService.getLoginUrl(req.session);
+      const loginUrl = this.authService.getLoginUrl(req.session);
       res.redirect(loginUrl);
     } catch (error) {
-      this.logger.error('Error generating login URL', error);
+      this.logger.error('Erro ao gerar URL de login', error);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         error: 'Erro ao gerar URL de login',
       });
@@ -60,27 +60,27 @@ export class OAuthController {
   }
 
   /**
-   * Processes the Gov.br callback after authentication.
-   * Can return an error or redirect to the home page.
+   * Processa o callback do Gov.br após a autenticação.
+   * Pode retornar um erro ou redirecionar para a página inicial.
    *
-   * @param req Request with callback parameters.
-   * @param res Response.
+   * @param req Requisição com parâmetros do callback.
+   * @param res Resposta.
    */
   @Get('/openid')
   async callback(@Req() req: Request, @Res() res: Response) {
     try {
       const result = await this.authService.handleCallback(req, req.session);
       if (typeof result === 'object' && result.status) {
-        // Error response
+        // Resposta de erro
         res.status(result.status).json(result.body);
       } else if (typeof result === 'string') {
-        // Redirect URL
+        // URL de redirecionamento
         res.redirect(result);
       } else {
         res.redirect('/');
       }
     } catch (error) {
-      this.logger.error('Error processing callback', error);
+      this.logger.error('Erro no processamento do callback', error);
       res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         error: 'Erro no processamento do callback',
       });
@@ -88,10 +88,10 @@ export class OAuthController {
   }
 
   /**
-   * Logs out the user's session and redirects to the Gov.br logout URL.
+   * Faz logout da sessão do usuário e redireciona para a URL de logout do Gov.br.
    *
-   * @param req Request with session.
-   * @param res Response.
+   * @param req Requisição com sessão.
+   * @param res Resposta.
    */
   @Get('/logout')
   async logout(@Req() req: Request, @Res() res: Response) {
@@ -100,9 +100,9 @@ export class OAuthController {
   }
 
   /**
-   * Logs out the user and redirects to the home page.
+   * Faz logout do usuário e redireciona para a página inicial.
    *
-   * @param res Response.
+   * @param res Resposta.
    */
   @Get('/logout/govbr')
   logoutGovBrCallback(@Res() res: Response) {
